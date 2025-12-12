@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  # The Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: task-sync-db
+    ports:
+      - '5433:5432' # Exposed to localhost for migrations
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: tasksync
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+
+  # The Backend API
+  api:
+    build: .
+    container_name: task-sync-api
+    ports:
+      - '8080:8080'
+    environment:
+      # INTERNAL NETWORK: Uses "postgres" service name
+      DATABASE_URL: postgresql://admin:password123@postgres:5432/tasksync?schema=public
+      PORT: 8080
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      - postgres # Wait for DB to start
+    volumes:
+      - ./src:/app/src # Syncs your code changes
+      - ./prisma:/app/prisma # Syncs schema changes
+      - ./.env:/app/.env
+
+  redis:
+    image: redis:alpine
+    container_name: task-sync-redis
+    ports:
+      - '6379:6379'
+    restart: always    
+
+volumes:
+  postgres_data:

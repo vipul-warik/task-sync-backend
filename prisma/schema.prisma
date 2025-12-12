@@ -1,0 +1,82 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+model User {
+  id String @id @default(uuid())
+  email String @unique
+  name String?
+  password String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  boards Board[] @relation("OwnerBoards")
+
+  @@map("users")
+}
+
+model Board {
+  id String @id @default(uuid())
+  title String
+  description String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  ownerId String
+  owner User @relation("OwnerBoards", fields: [ownerId], references: [id])
+  columns Column[]
+
+  @@map("boards")
+
+}
+
+model Column {
+  id String @id @default(uuid())
+  title String
+  order Int // To keep track of "To Do" vs "Done" position
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  boardId String
+  board Board   @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  tasks Task[]
+
+  @@map("columns")
+}
+
+model Task {
+  id String @id @default(uuid())
+  title String
+  content String?
+  priority Priority @default(LOW)
+  order Int // For drag-and-drop positioning
+  dueDate DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  columnId String
+  column Column @relation(fields: [columnId], references: [id], onDelete: Cascade)
+
+  @@map("tasks")
+}
