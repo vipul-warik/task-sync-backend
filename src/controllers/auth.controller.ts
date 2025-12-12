@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
-import {email, z} from "zod";
-import {prisma} from "../config/db"
-import { hashPassword, comparePasswords, generateToken } from "src/utils/auth";
+import { z } from "zod";
+import * as authService from '../services/auth.service';
 
 // Validation Schemas
 const registerSchema = z.object({
@@ -18,31 +17,19 @@ const loginSchema = z.object({
 // Signup
 export const register = async (req: Request, res: Response) => {
     try {
-        // Validate Input
+        // Validate Input (HTTP layer responsiblity)
         const data = registerSchema.parse(req.body);
 
-        // Check if the user exists
-        const existingUser = await prisma.user.findUnique({where: {email: data.email}});
+        // Call Service (Business Layer responsibility)
+        const result = await authService.registerUser(data);
 
-        if(existingUser){
-            return res.status(400).json({error: "User already exist"});
-        }
-
-        // Hash Password & Create User
-        const hashedPassword = await hashPassword(data.password);
-        const user = await prisma.user.create({
-            data: {
-                email: data.email,
-                name: data.name,
-                password: hashedPassword,
-            }
-        });
-
-        // Return Token
-        const token = generateToken(user.id);
-        res.status(201).json({ token, user: { id: user.id, email: user.email, name: user.name } });
+        // Response
+        res.status(201).json(result);
+        
+        
     } catch (error: any) {
-        res.status(400).json({error: error.message || "Registration failed"});
+        const status = error.message === 'User already exists' ? 409 : 400;
+        res.status(status).json({ error: error.message });
     }
 };
 
@@ -51,19 +38,11 @@ export const login = async (req: Request, res: Response) => {
     try {
         const data = loginSchema.parse(req.body);
 
-    // 1. Find User
-    const user = await prisma.user.findUnique({ where: { email: data.email } });
-    if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+        const result = await authService.loginUser(data);
 
-    // 2. Check Password
-    const isValid = await comparePasswords(data.password, user.password);
-    if (!isValid) return res.status(401).json({ error: 'Invalid credentials' });
-
-    // 3. Return Token
-    const token = generateToken(user.id);
-    res.json({ token, user: { id: user.id, email: user.email, name: user.name } });
+        res.json(result);
 
     } catch (error) {
-        res.status(400).json({ error: error.message || 'Login failed' });
+        res.status(401).json({ error: error.message || 'Login failed' });
     }
 }
