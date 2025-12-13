@@ -1,8 +1,8 @@
 import { Response } from "express";
-import { prisma } from "src/config/db";
 import { AuthRequest } from "src/middlewares/auth.middleware";
 import z from "zod";
-import { getIO } from '../utils/socket';
+import * as taskService from "../services/task.service";
+
 
 
 // Schema for Creating
@@ -28,41 +28,14 @@ export const createTask = async (req: AuthRequest, res: Response) => {
         const {title, columnId, priority} = createTaskSchema.parse(req.body);
         const userId = req.userId;
 
-        // Check Ownership
-        const column = await prisma.column.findUnique({
-            where: {id: columnId},
-            include: {board: true},
-        });
-
-        if(!column || column.board.ownerId !== userId){
-            return res.status(404).json({ error: 'Column not found' });
-        };
-
-        // Order Calculation
-        const lastTask = await prisma.task.findFirst({
-            where: {columnId: columnId},
-            orderBy: {order: 'desc'},
-        });
-
-        const newOrder = lastTask ? lastTask.order + 1 : 0;
-
-        const task = await prisma.task.create({
-            data: {
-                title,
-                columnId,
-                priority: priority || 'LOW',
-                order: newOrder,
-            }
-        });
-
-        // Real time notification - Task Created
-        const boardId = column.boardId;
-
-        getIO().to(boardId).emit('task:created', task);
+        const task = await taskService.createTask({title, columnId, priority, userId});
 
         res.status(201).json(task);
 
-    } catch (error) {
+    } catch (error: any) {
+        if (error.message === 'Column not found or access denied') {
+            return res.status(404).json({ error: error.message });
+        }
         res.status(400).json({ error: error.message });
     }
 }
@@ -75,35 +48,18 @@ export const updateTask = async (req: AuthRequest, res: Response) => {
         const data = updateTaskSchema.parse(req.body);
         const userId = req.userId;
 
-        // Check Ownership
-        const existingTask = await prisma.task.findUnique({
-            where: {id},
-            include: {column: {
-                include: {board: true},
-            }}
+        const task = await taskService.updateTask({
+            userId,
+            taskId: id,
+            ...data
         });
-
-        if(!existingTask || existingTask.column.board.ownerId !== userId){
-            return res.status(404).json({ error: "Task not found" });
-        }
-
-        // Update
-        const task = await prisma.task.update({
-            where: {id},
-            data: {
-                ...data,
-                updatedAt: new Date()
-            }
-        });
-
-        // Real time Notification - Task updated
-        const boardId = existingTask.column.boardId;
-
-        getIO().to(boardId).emit('task:updated', task);
 
         res.json(task);
 
-    } catch (error) {
+    } catch (error: any) {
+        if (error.message === 'Task not found or access denied') {
+            return res.status(404).json({ error: error.message });
+        }
         res.status(400).json({ error: error.message });
     }
 }
@@ -115,23 +71,14 @@ export const deleteTask = async (req: AuthRequest, res: Response) => {
         const {id} = req.params;
         const userId = req.userId;
 
-        // Check Ownership
-        const task = await prisma.task.findUnique({
-            where: {id},
-            include: {
-                column: {
-                 include: {board: true}
-            }}
-        });
+        await taskService.deleteTask(id, userId);
 
-        if(!task || task.column.board.ownerId !== userId){
-            return res.status(404).json({ error: "Task not found" });
-        }
-
-        await prisma.task.delete({ where: { id } });
         res.json({ message: "Task deleted" });
 
-    } catch (error) {
+    } catch (error: any) {
+        if (error.message === 'Task not found or access denied') {
+            return res.status(404).json({ error: error.message });
+        }
         res.status(500).json({ error: "Failed to delete task" });
     }
 }
