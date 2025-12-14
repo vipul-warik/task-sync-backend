@@ -8,9 +8,9 @@ services:
     ports:
       - '5433:5432' # Exposed to localhost for migrations
     environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: password123
-      POSTGRES_DB: tasksync
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: always
@@ -23,7 +23,7 @@ services:
       - '8080:8080'
     environment:
       # INTERNAL NETWORK: Uses "postgres" service name
-      DATABASE_URL: postgresql://admin:password123@postgres:5432/tasksync?schema=public
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
       PORT: 8080
       REDIS_URL: redis://redis:6379
     depends_on:
