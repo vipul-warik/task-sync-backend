@@ -1,5 +1,5 @@
-import { prisma } from "src/config/db";
-import { comparePasswords, generateToken, hashPassword } from "src/utils/auth";
+import { prisma } from "../config/db";
+import { comparePasswords, generateToken, hashPassword } from "../utils/auth";
 
 
 // Expected inputs (Interfaces)

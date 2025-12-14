@@ -53,4 +53,6 @@ export const deleteColumn = async (id: string, userId: string) => {
         await prisma.column.delete({
             where: {id},
         });
+
+        return true;
 }

@@ -26,7 +26,7 @@ const updateTaskSchema = z.object({
 export const createTask = async (req: AuthRequest, res: Response) => {
     try {
         const {title, columnId, priority} = createTaskSchema.parse(req.body);
-        const userId = req.userId;
+        const userId = req.userId!;
 
         const task = await taskService.createTask({title, columnId, priority, userId});
 
@@ -46,7 +46,7 @@ export const updateTask = async (req: AuthRequest, res: Response) => {
     try {
         const {id} = req.params;
         const data = updateTaskSchema.parse(req.body);
-        const userId = req.userId;
+        const userId = req.userId!;
 
         const task = await taskService.updateTask({
             userId,
@@ -69,7 +69,7 @@ export const updateTask = async (req: AuthRequest, res: Response) => {
 export const deleteTask = async (req: AuthRequest, res: Response) => {
     try {
         const {id} = req.params;
-        const userId = req.userId;
+        const userId = req.userId!;
 
         await taskService.deleteTask(id, userId);
 
