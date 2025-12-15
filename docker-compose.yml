@@ -17,7 +17,9 @@ services:
 
   # The Backend API
   api:
-    build: .
+    build:
+      context: .
+      target: dev
     container_name: task-sync-api
     ports:
       - '8080:8080'
