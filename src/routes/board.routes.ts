@@ -1,6 +1,6 @@
 import { Router } from "express";
 import {authenticate} from "../middlewares/auth.middleware"
-import { createBoard, deleteBoard, getBoardById, getBoards } from "src/controllers/board.controller";
+import { createBoard, deleteBoard, getBoardById, getBoards } from "../controllers/board.controller";
 
 const router = Router();
 
