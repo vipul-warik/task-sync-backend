@@ -28,3 +28,5 @@ generated/
 
 # Temporary Test Scripts
 test-client.js
+
+/src/generated/prisma
