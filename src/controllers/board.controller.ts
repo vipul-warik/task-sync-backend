@@ -1,6 +1,6 @@
 import { Response } from "express";
-import { AuthRequest } from "src/middlewares/auth.middleware";
-import { createBoardSchema } from "src/utils/validation";
+import { AuthRequest } from "../middlewares/auth.middleware";
+import { createBoardSchema } from "../utils/validation";
 import * as boardService from '../services/board.service';
 
 
