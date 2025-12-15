@@ -1,5 +1,5 @@
-import { prisma } from "src/config/db";
-import redis from "src/config/redis";
+import { prisma } from "../config/db";
+import redis from "../config/redis";
 
 
 interface CreateBoardInput {

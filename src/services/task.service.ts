@@ -1,4 +1,4 @@
-import { prisma } from "src/config/db";
+import { prisma } from "../config/db";
 import { getIO } from '../utils/socket';
 
 

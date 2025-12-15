@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { AuthRequest } from "src/middlewares/auth.middleware";
+import { AuthRequest } from "../middlewares/auth.middleware";
 import z from "zod";
 import * as taskService from "../services/task.service";
 
