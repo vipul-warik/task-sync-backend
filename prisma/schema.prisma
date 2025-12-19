@@ -28,7 +28,8 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Relations
-  boards Board[] @relation("OwnerBoards")
+  boards Board[] @relation("OwnerBoards") // Owner boards
+  memberBoards BoardMember[] // member boards
 
   @@map("users")
 }
@@ -44,9 +45,23 @@ model Board {
   ownerId String
   owner User @relation("OwnerBoards", fields: [ownerId], references: [id])
   columns Column[]
+  members BoardMember[]
 
   @@map("boards")
 
+}
+
+model BoardMember {
+  id        String   @id @default(uuid())
+  boardId   String
+  userId    String
+  joinedAt  DateTime @default(now())
+
+  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([boardId, userId]) // Prevent adding the same person twice
+  @@map("board_members")
 }
 
 model Column {
