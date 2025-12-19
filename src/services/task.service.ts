@@ -23,12 +23,20 @@ export const createTask = async (data: createTaskInput) => {
     // Check Ownership
     const column = await prisma.column.findUnique({
         where: { id: data.columnId },
-        include: { board: true },
+        include: { board: { include: { members: true } } },
     });
 
-    if (!column || column.board.ownerId !== data.userId) {
+    if (!column) {
         throw new Error('Column not found');
-    };
+    }
+
+    // 2. SECURITY CHECK: Is user Owner OR Member?
+    const isOwner = column.board.ownerId === data.userId;
+    const isMember = column.board.members.some(m => m.userId === data.userId);
+
+    if (!isOwner && !isMember) {
+        throw new Error('Only board members can create tasks');
+    }
 
     // Order Calculation
     const lastTask = await prisma.task.findFirst({
@@ -61,13 +69,29 @@ export const updateTask = async (data: UpdateTaskInput) => {
         where: { id: data.taskId },
         include: {
             column: {
-                include: { board: true },
+                include: {
+                    board: {
+                        include: {
+                            members: true // We need members to check permissions
+                        }
+                    }
+                },
             }
         }
     });
 
-    if (!existingTask || existingTask.column.board.ownerId !== data.userId) {
-        throw new Error("Task not found or access denied");
+    if (!existingTask) {
+      throw new Error('Task not found');
+    }
+
+    const board = existingTask.column.board;
+
+    // 2. SECURITY CHECK: Is user the Owner OR a Member?
+    const isOwner = board.ownerId === data.userId;
+    const isMember = board.members.some((m) => m.userId === data.userId);
+
+    if (!isOwner && !isMember) {
+      throw new Error('Access denied. You must be a member of the board to update tasks');
     }
 
     // Update
@@ -84,31 +108,30 @@ export const updateTask = async (data: UpdateTaskInput) => {
     });
 
     // Real time Notification - Task updated
-    const boardId = existingTask.column.boardId;
-
-    getIO().to(boardId).emit('task:updated', task);
+    getIO().to(board.id).emit('task:updated', task);
 
     return task;
 }
 
 export const deleteTask = async (taskId: string, userId: string) => {
     // Check Ownership
-        const task = await prisma.task.findUnique({
-            where: {id: taskId},
-            include: {
-                column: {
-                 include: {board: true}
-            }}
-        });
-
-        if(!task || task.column.board.ownerId !== userId){
-            throw new Error("Task not found or access denied");
+    const task = await prisma.task.findUnique({
+        where: { id: taskId },
+        include: {
+            column: {
+                include: { board: true }
+            }
         }
+    });
 
-        await prisma.task.delete({ where: { id: taskId } });
+    if (!task || task.column.board.ownerId !== userId) {
+        throw new Error("Task not found or access denied");
+    }
 
-        const boardId = task.column.boardId;
-        getIO().to(boardId).emit('task:deleted', { id: taskId });
+    await prisma.task.delete({ where: { id: taskId } });
 
-        return true;
+    const boardId = task.column.boardId;
+    getIO().to(boardId).emit('task:deleted', { id: taskId });
+
+    return true;
 }
