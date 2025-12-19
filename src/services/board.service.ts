@@ -8,6 +8,12 @@ interface CreateBoardInput {
   description?: string,
 }
 
+interface inviteMemberInput {
+  requesterId: string,
+  boardId: string,
+  email: string,
+}
+
 
 // Create new Board
 export const createBoard = async (data: CreateBoardInput) => {
@@ -106,4 +112,54 @@ export const deleteBoard = async (boardId: string, userId: string) => {
   await redis.del(`user:${userId}:boards`);
 
   return true;
+};
+
+// Invite Member
+export const inviteMember = async (data: inviteMemberInput) => {
+
+  const board = await prisma.board.findUnique({
+    where: {id: data.boardId}
+  })
+
+  if(!board) {
+    throw new Error('Board not found');
+  }
+
+  if(board.ownerId !== data.requesterId){
+    throw new Error('Only the board owner can invite members');
+  }
+
+  const userToInvite = await prisma.user.findUnique({
+    where: { email: data.email },
+  });
+
+  if(!userToInvite){
+    throw new Error('User not found');
+  };
+
+  if (userToInvite.id === data.requesterId) {
+      throw new Error('You are already the owner.');
+    }
+  
+  const existingMember = await prisma.boardMember.findUnique({
+    where: {
+      boardId_userId: {
+        boardId: data.boardId,
+        userId: userToInvite.id,
+      }
+    }
+  });
+
+  if(existingMember){
+    throw new Error('User is already a member of this board');
+  }
+
+  await prisma.boardMember.create({
+    data: {
+      boardId: data.boardId,
+      userId: userToInvite.id,
+    }
+  });
+
+  return `Successfully added ${userToInvite.name} to the board`;
 };

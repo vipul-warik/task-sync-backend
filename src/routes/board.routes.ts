@@ -1,6 +1,6 @@
 import { Router } from "express";
 import {authenticate} from "../middlewares/auth.middleware"
-import { createBoard, deleteBoard, getBoardById, getBoards } from "../controllers/board.controller";
+import { createBoard, deleteBoard, getBoardById, getBoards, inviteMember } from "../controllers/board.controller";
 
 const router = Router();
 
@@ -11,5 +11,6 @@ router.post('/', createBoard);
 router.get('/', getBoards);
 router.get('/:id', getBoardById);
 router.delete('/:id', deleteBoard);
+router.post('/:id/invite', inviteMember);
 
 export default router;

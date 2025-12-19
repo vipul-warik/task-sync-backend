@@ -1,4 +1,4 @@
-import {z} from 'zod';
+import {email, z} from 'zod';
 
 export const createBoardSchema = z.object({
     title: z.string().min(1, "Title is required"),
@@ -14,4 +14,8 @@ export const createTaskSchema = z.object({
   title: z.string().min(1, "Title is required"),
   columnId: z.uuid(),
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH']).optional(),
+});
+
+export const inviteMemberSchema = z.object({
+  email: z.email(),
 });
