@@ -28,6 +28,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
       PORT: 8080
       REDIS_URL: redis://redis:6379
+      JWT_SECRET: J2348gvdfr!%^#()_sdfg
     depends_on:
       - postgres # Wait for DB to start
     volumes:

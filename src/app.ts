@@ -14,7 +14,7 @@ import { initSocket } from './utils/socket';
 dotenv.config();
 
 const app: Application = express();
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 8080;
 
 // Raw http server form Node.js
 const httpServer = createServer(app);
@@ -25,7 +25,10 @@ initSocket(httpServer);
 
 // Middleware
 app.use(express.json()); // Parse JSON bodies
-app.use(cors());         // Enable CORS
+app.use(cors({
+  origin: "*", // Allow your Frontend URL
+  credentials: true
+}));         // Enable CORS
 app.use(helmet());       // Security Headers
 
 // Routes

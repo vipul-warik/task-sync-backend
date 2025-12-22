@@ -58,7 +58,7 @@ export const createTask = async (data: createTaskInput) => {
     // Real time notification - Task Created
     const boardId = column.boardId;
 
-    getIO().to(boardId).emit('task:created', task);
+    getIO().to(boardId).emit('board-updated');
 
     return task;
 }
@@ -108,7 +108,7 @@ export const updateTask = async (data: UpdateTaskInput) => {
     });
 
     // Real time Notification - Task updated
-    getIO().to(board.id).emit('task:updated', task);
+    getIO().to(board.id).emit('board-updated');
 
     return task;
 }
@@ -131,7 +131,7 @@ export const deleteTask = async (taskId: string, userId: string) => {
     await prisma.task.delete({ where: { id: taskId } });
 
     const boardId = task.column.boardId;
-    getIO().to(boardId).emit('task:deleted', { id: taskId });
+    getIO().to(boardId).emit('board-updated');
 
     return true;
 }

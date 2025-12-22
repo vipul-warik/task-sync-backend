@@ -1,3 +1,4 @@
+import { getIO } from "src/utils/socket";
 import { prisma } from "../config/db";
 
 
@@ -37,6 +38,8 @@ export const createColumn = async ({title, boardId, userId} : CreateColumnInput)
             }
         });
 
+        getIO().to(board.id).emit('board-updated');
+
         return column;
 }
 
@@ -53,6 +56,8 @@ export const deleteColumn = async (id: string, userId: string) => {
         await prisma.column.delete({
             where: {id},
         });
+
+        getIO().to(column.board.id).emit('board-updated');
 
         return true;
 }

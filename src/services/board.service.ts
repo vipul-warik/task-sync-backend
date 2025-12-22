@@ -1,3 +1,4 @@
+import { getIO } from "src/utils/socket";
 import { prisma } from "../config/db";
 import redis from "../config/redis";
 
@@ -110,6 +111,8 @@ export const deleteBoard = async (boardId: string, userId: string) => {
 
   // Cache Invalidation
   await redis.del(`user:${userId}:boards`);
+
+  getIO().to(boardId).emit('board-updated');
 
   return true;
 };
