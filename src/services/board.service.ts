@@ -1,4 +1,4 @@
-import { getIO } from "src/utils/socket";
+import { getIO } from "../utils/socket";
 import { prisma } from "../config/db";
 import redis from "../config/redis";
 
